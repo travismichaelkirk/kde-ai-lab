@@ -50,9 +50,20 @@ start_kwin_controller() {
         org.kde.kwin.Scripting.start
 }
 
+ensure_konsole() {
+    if pgrep -x konsole >/dev/null; then
+        log "Konsole already running"
+        return
+    fi
+
+    log "Konsole not running; launching"
+    /usr/bin/konsole >/dev/null 2>&1 &
+}
+
 main() {
     log "launcher started"
     start_kwin_controller
+    ensure_konsole
 }
 
 main "$@"
