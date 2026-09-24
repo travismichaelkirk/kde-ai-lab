@@ -1,9 +1,16 @@
 /*
  * KDE AI Lab - AI + Terminal Workspace
  *
- * Waits for the ChatGPT PWA and Konsole to exist, moves both
- * to the primary output, then creates an idempotent 50/50
- * ChatGPT-left / Konsole-right workspace.
+ * Waits for the ChatGPT PWA and Konsole to exist and creates
+ * a topology-aware workspace:
+ *
+ *   2+ outputs:
+ *     ChatGPT -> leftmost output, maximized
+ *     Konsole -> rightmost output, maximized
+ *
+ *   1 output:
+ *     ChatGPT -> left half
+ *     Konsole -> right half
  */
 
 const CHATGPT_DESKTOP_FILE =
@@ -47,6 +54,12 @@ function findWindow(desktopFileName) {
     );
 }
 
+function getOutputsLeftToRight() {
+    return workspace.screens.slice().sort((a, b) =>
+        a.geometry.x - b.geometry.x
+    );
+}
+
 function isLeftHalf(window, output) {
     const g = window.frameGeometry;
     const o = output.geometry;
@@ -65,6 +78,75 @@ function isRightHalf(window, output) {
         g.x === o.x + o.width / 2 &&
         g.width === o.width / 2
     );
+}
+
+function arrangeSingleOutput(chatgpt, konsole, output) {
+    log(
+        "single-output mode on " + output.name +
+        "; arranging 50/50 workspace."
+    );
+
+    workspace.sendClientToScreen(chatgpt, output);
+    workspace.sendClientToScreen(konsole, output);
+
+    /*
+     * A window may arrive here maximized after previously being used
+     * in dual-output mode. Restore it before applying quick tiling.
+     */
+    if (chatgpt.maximizeMode !== 0) {
+        log("Restoring ChatGPT from maximized state.");
+        chatgpt.setMaximize(false, false);
+    }
+
+    if (konsole.maximizeMode !== 0) {
+        log("Restoring Konsole from maximized state.");
+        konsole.setMaximize(false, false);
+    }
+
+    if (!isLeftHalf(chatgpt, output)) {
+        log("ChatGPT is not left-half; requesting QuickTileLeft.");
+        workspace.activeWindow = chatgpt;
+        workspace.slotWindowQuickTileLeft();
+    } else {
+        log("ChatGPT already left-half.");
+    }
+
+    if (!isRightHalf(konsole, output)) {
+        log("Konsole is not right-half; requesting QuickTileRight.");
+        workspace.activeWindow = konsole;
+        workspace.slotWindowQuickTileRight();
+    } else {
+        log("Konsole already right-half.");
+    }
+}
+
+function arrangeDualOutput(chatgpt, konsole, outputs) {
+    const leftOutput = outputs[0];
+    const rightOutput = outputs[outputs.length - 1];
+
+    log(
+        "multi-output mode: ChatGPT -> " +
+        leftOutput.name +
+        ", Konsole -> " +
+        rightOutput.name + "."
+    );
+
+    workspace.sendClientToScreen(chatgpt, leftOutput);
+    workspace.sendClientToScreen(konsole, rightOutput);
+
+    if (chatgpt.maximizeMode !== 3) {
+        log("Maximizing ChatGPT on " + leftOutput.name + ".");
+        chatgpt.setMaximize(true, true);
+    } else {
+        log("ChatGPT already maximized on " + leftOutput.name + ".");
+    }
+
+    if (konsole.maximizeMode !== 3) {
+        log("Maximizing Konsole on " + rightOutput.name + ".");
+        konsole.setMaximize(true, true);
+    } else {
+        log("Konsole already maximized on " + rightOutput.name + ".");
+    }
 }
 
 function arrangeWorkspace() {
@@ -88,30 +170,17 @@ function arrangeWorkspace() {
         return;
     }
 
-    const targetOutput = workspace.screenOrder[0];
+    const outputs = getOutputsLeftToRight();
 
-    log(
-        "ChatGPT and Konsole found; arranging workspace on " +
-        targetOutput.name + "."
-    );
-
-    workspace.sendClientToScreen(chatgpt, targetOutput);
-    workspace.sendClientToScreen(konsole, targetOutput);
-
-    if (!isLeftHalf(chatgpt, targetOutput)) {
-        log("ChatGPT is not left-half; requesting QuickTileLeft.");
-        workspace.activeWindow = chatgpt;
-        workspace.slotWindowQuickTileLeft();
-    } else {
-        log("ChatGPT already left-half.");
+    if (outputs.length === 0) {
+        log("No outputs available; workspace arrangement skipped.");
+        return;
     }
 
-    if (!isRightHalf(konsole, targetOutput)) {
-        log("Konsole is not right-half; requesting QuickTileRight.");
-        workspace.activeWindow = konsole;
-        workspace.slotWindowQuickTileRight();
+    if (outputs.length === 1) {
+        arrangeSingleOutput(chatgpt, konsole, outputs[0]);
     } else {
-        log("Konsole already right-half.");
+        arrangeDualOutput(chatgpt, konsole, outputs);
     }
 
     log("AI + Terminal workspace complete.");
