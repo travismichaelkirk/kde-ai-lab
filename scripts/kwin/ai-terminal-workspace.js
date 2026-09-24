@@ -1,9 +1,9 @@
 /*
  * KDE AI Lab - AI + Terminal Workspace
  *
- * Waits for the ChatGPT PWA and Konsole to exist, then uses
- * KWin's native quick-tile operations to create the verified
- * 50/50 workspace.
+ * Waits for the ChatGPT PWA and Konsole to exist, moves both
+ * to the primary output, then creates an idempotent 50/50
+ * ChatGPT-left / Konsole-right workspace.
  */
 
 const CHATGPT_DESKTOP_FILE =
@@ -25,6 +25,26 @@ function findWindow(desktopFileName) {
     );
 }
 
+function isLeftHalf(window, output) {
+    const g = window.frameGeometry;
+    const o = output.geometry;
+
+    return (
+        g.x === o.x &&
+        g.width === o.width / 2
+    );
+}
+
+function isRightHalf(window, output) {
+    const g = window.frameGeometry;
+    const o = output.geometry;
+
+    return (
+        g.x === o.x + o.width / 2 &&
+        g.width === o.width / 2
+    );
+}
+
 function arrangeWorkspace() {
     if (layoutComplete) {
         return;
@@ -41,13 +61,31 @@ function arrangeWorkspace() {
         return;
     }
 
-    log("ChatGPT and Konsole found; arranging workspace.");
+    const targetOutput = workspace.screenOrder[0];
 
-    workspace.activeWindow = chatgpt;
-    workspace.slotWindowQuickTileLeft();
+    log(
+        "ChatGPT and Konsole found; arranging workspace on " +
+        targetOutput.name + "."
+    );
 
-    workspace.activeWindow = konsole;
-    workspace.slotWindowQuickTileRight();
+    workspace.sendClientToScreen(chatgpt, targetOutput);
+    workspace.sendClientToScreen(konsole, targetOutput);
+
+    if (!isLeftHalf(chatgpt, targetOutput)) {
+        log("ChatGPT is not left-half; requesting QuickTileLeft.");
+        workspace.activeWindow = chatgpt;
+        workspace.slotWindowQuickTileLeft();
+    } else {
+        log("ChatGPT already left-half.");
+    }
+
+    if (!isRightHalf(konsole, targetOutput)) {
+        log("Konsole is not right-half; requesting QuickTileRight.");
+        workspace.activeWindow = konsole;
+        workspace.slotWindowQuickTileRight();
+    } else {
+        log("Konsole already right-half.");
+    }
 
     layoutComplete = true;
     log("AI + Terminal workspace complete.");
