@@ -1,0 +1,16 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Travis Kirk"
+            }
+        ],
+        "Description": "Topology-aware ChatGPT and Konsole workspace controller",
+        "Icon": "preferences-system-windows-script-test",
+        "Id": "kde-ai-lab-workspace",
+        "License": "MIT",
+        "Name": "KDE AI Lab Workspace"
+    },
+    "X-Plasma-API": "javascript"
+}
