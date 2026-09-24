@@ -19,6 +19,9 @@ const CHATGPT_DESKTOP_FILE =
 const KONSOLE_DESKTOP_FILE =
     "org.kde.konsole";
 
+const SCRCPY_DESKTOP_FILE =
+    "scrcpy";
+
 let chatgptLaunchRequested = false;
 
 function log(message) {
@@ -123,12 +126,14 @@ function arrangeSingleOutput(chatgpt, konsole, output) {
 function arrangeDualOutput(chatgpt, konsole, outputs) {
     const leftOutput = outputs[0];
     const rightOutput = outputs[outputs.length - 1];
+    const pixel = findWindow(SCRCPY_DESKTOP_FILE);
 
     log(
         "multi-output mode: ChatGPT -> " +
         leftOutput.name +
-        ", Konsole -> " +
-        rightOutput.name + "."
+        ", Konsole -> left half of " +
+        rightOutput.name +
+        (pixel ? ", Pixel -> middle quarter." : ".")
     );
 
     workspace.sendClientToScreen(chatgpt, leftOutput);
@@ -141,12 +146,48 @@ function arrangeDualOutput(chatgpt, konsole, outputs) {
         log("ChatGPT already maximized on " + leftOutput.name + ".");
     }
 
-    if (konsole.maximizeMode !== 3) {
-        log("Maximizing Konsole on " + rightOutput.name + ".");
-        konsole.setMaximize(true, true);
-    } else {
-        log("Konsole already maximized on " + rightOutput.name + ".");
+    if (konsole.maximizeMode !== 0) {
+        log("Restoring Konsole before positioning.");
+        konsole.setMaximize(false, false);
     }
+
+    const rightGeometry = rightOutput.geometry;
+
+    konsole.frameGeometry = {
+        x: rightGeometry.x,
+        y: rightGeometry.y,
+        width: rightGeometry.width / 2,
+        height: rightGeometry.height
+    };
+
+    if (!pixel) {
+        log("Pixel not present; Pixel lane remains available.");
+        return;
+    }
+
+    workspace.sendClientToScreen(pixel, rightOutput);
+
+    if (pixel.maximizeMode !== 0) {
+        log("Restoring Pixel before positioning.");
+        pixel.setMaximize(false, false);
+    }
+
+    const pixelGeometry = pixel.frameGeometry;
+    const pixelLaneX =
+        rightGeometry.x + rightGeometry.width / 2;
+
+    pixel.frameGeometry = {
+        x: pixelLaneX,
+        y: rightGeometry.y,
+        width: pixelGeometry.width,
+        height: rightGeometry.height
+    };
+
+    log(
+        "Pixel left-anchored at x=" + pixelLaneX +
+        "; width=" + pixel.frameGeometry.width +
+        "; AUX lane reserved on right."
+    );
 }
 
 function arrangeWorkspace() {
