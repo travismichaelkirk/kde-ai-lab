@@ -22,7 +22,12 @@ const KONSOLE_DESKTOP_FILE =
 const SCRCPY_DESKTOP_FILE =
     "scrcpy";
 
+const AUX_DESKTOP_FILE =
+    "kde-ai-lab-aux";
+
 let chatgptLaunchRequested = false;
+let pixelCenterTimer;
+let auxSettleTimer;
 
 function log(message) {
     console.info("kde-ai-lab-workspace: " + message);
@@ -127,13 +132,15 @@ function arrangeDualOutput(chatgpt, konsole, outputs) {
     const leftOutput = outputs[0];
     const rightOutput = outputs[outputs.length - 1];
     const pixel = findWindow(SCRCPY_DESKTOP_FILE);
+    const aux = findWindow(AUX_DESKTOP_FILE);
 
     log(
         "multi-output mode: ChatGPT -> " +
         leftOutput.name +
         ", Konsole -> left half of " +
         rightOutput.name +
-        (pixel ? ", Pixel -> middle quarter." : ".")
+        (pixel ? ", Pixel -> middle lane" : "") +
+        (aux ? ", AUX -> right lane." : ".")
     );
 
     workspace.sendClientToScreen(chatgpt, leftOutput);
@@ -183,10 +190,42 @@ function arrangeDualOutput(chatgpt, konsole, outputs) {
         height: rightGeometry.height
     };
 
+    const pixelRight =
+        pixel.frameGeometry.x + pixel.frameGeometry.width;
+
     log(
         "Pixel left-anchored at x=" + pixelLaneX +
         "; width=" + pixel.frameGeometry.width +
-        "; AUX lane reserved on right."
+        "; AUX lane begins at x=" + pixelRight + "."
+    );
+
+    if (!aux) {
+        log("AUX not present; right lane remains available.");
+        return;
+    }
+
+    workspace.sendClientToScreen(aux, rightOutput);
+
+    if (aux.maximizeMode !== 0) {
+        log("Restoring AUX before positioning.");
+        aux.setMaximize(false, false);
+    }
+
+    const outputRight =
+        rightGeometry.x + rightGeometry.width;
+
+    aux.frameGeometry = {
+        x: pixelRight,
+        y: rightGeometry.y,
+        width: outputRight - pixelRight,
+        height: rightGeometry.height
+    };
+
+    log(
+        "AUX positioned at x=" + aux.frameGeometry.x +
+        "; width=" + aux.frameGeometry.width +
+        "; right edge=" +
+        (aux.frameGeometry.x + aux.frameGeometry.width) + "."
     );
 }
 
@@ -224,6 +263,21 @@ function arrangeWorkspace() {
         arrangeDualOutput(chatgpt, konsole, outputs);
     }
 
+    if (
+        outputs.length > 1 &&
+        findWindow(SCRCPY_DESKTOP_FILE)
+    ) {
+        pixelCenterTimer.start();
+    }
+
+    if (
+        outputs.length > 1 &&
+        findWindow(SCRCPY_DESKTOP_FILE) &&
+        findWindow(AUX_DESKTOP_FILE)
+    ) {
+        auxSettleTimer.start();
+    }
+
     log("AI + Terminal workspace complete.");
 }
 
@@ -233,6 +287,88 @@ workspaceCheckTimer.singleShot = true;
 
 workspaceCheckTimer.timeout.connect(() => {
     arrangeWorkspace();
+});
+
+pixelCenterTimer = new QTimer();
+pixelCenterTimer.interval = 500;
+pixelCenterTimer.singleShot = true;
+
+pixelCenterTimer.timeout.connect(() => {
+    const pixel = findWindow(SCRCPY_DESKTOP_FILE);
+    const outputs = getOutputsLeftToRight();
+
+    if (!pixel || outputs.length < 2) {
+        return;
+    }
+
+    const rightOutput = outputs[outputs.length - 1];
+    const placementArea = workspace.clientArea(
+        KWin.PlacementArea,
+        rightOutput,
+        workspace.currentDesktop
+    );
+    const pixelGeometry = pixel.frameGeometry;
+
+    const centeredY =
+        placementArea.y +
+        Math.floor(
+            (placementArea.height - pixelGeometry.height) / 2
+        );
+
+    pixel.frameGeometry = {
+        x: pixelGeometry.x,
+        y: centeredY,
+        width: pixelGeometry.width,
+        height: pixelGeometry.height
+    };
+
+    log(
+        "Pixel vertically centered at y=" + centeredY +
+        "; settled height=" + pixelGeometry.height + "."
+    );
+});
+
+auxSettleTimer = new QTimer();
+auxSettleTimer.interval = 500;
+auxSettleTimer.singleShot = true;
+
+auxSettleTimer.timeout.connect(() => {
+    const pixel = findWindow(SCRCPY_DESKTOP_FILE);
+    const aux = findWindow(AUX_DESKTOP_FILE);
+    const outputs = getOutputsLeftToRight();
+
+    if (!pixel || !aux || outputs.length < 2) {
+        return;
+    }
+
+    const rightOutput = outputs[outputs.length - 1];
+    const rightGeometry = rightOutput.geometry;
+
+    workspace.sendClientToScreen(aux, rightOutput);
+
+    if (aux.maximizeMode !== 0) {
+        aux.setMaximize(false, false);
+    }
+
+    const pixelGeometry = pixel.frameGeometry;
+    const pixelRight =
+        pixelGeometry.x + pixelGeometry.width;
+    const outputRight =
+        rightGeometry.x + rightGeometry.width;
+
+    aux.frameGeometry = {
+        x: pixelRight,
+        y: rightGeometry.y,
+        width: outputRight - pixelRight,
+        height: rightGeometry.height
+    };
+
+    log(
+        "AUX settled at x=" + aux.frameGeometry.x +
+        "; width=" + aux.frameGeometry.width +
+        "; right edge=" +
+        (aux.frameGeometry.x + aux.frameGeometry.width) + "."
+    );
 });
 
 function scheduleWorkspaceCheck() {
