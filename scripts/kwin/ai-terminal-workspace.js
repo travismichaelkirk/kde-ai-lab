@@ -12,10 +12,32 @@ const CHATGPT_DESKTOP_FILE =
 const KONSOLE_DESKTOP_FILE =
     "org.kde.konsole";
 
-let layoutComplete = false;
+let chatgptLaunchRequested = false;
 
 function log(message) {
     console.info("kde-ai-lab-workspace: " + message);
+}
+
+function requestChatGPTLaunch() {
+    if (chatgptLaunchRequested) {
+        log("ChatGPT launch already requested; waiting for window.");
+        return;
+    }
+
+    chatgptLaunchRequested = true;
+    log("ChatGPT missing; requesting kde-ai-chatgpt.service.");
+
+    callDBus(
+        "org.freedesktop.systemd1",
+        "/org/freedesktop/systemd1",
+        "org.freedesktop.systemd1.Manager",
+        "StartUnit",
+        "kde-ai-chatgpt.service",
+        "replace",
+        function(job) {
+            log("ChatGPT launch request accepted: " + job);
+        }
+    );
 }
 
 function findWindow(desktopFileName) {
@@ -46,18 +68,23 @@ function isRightHalf(window, output) {
 }
 
 function arrangeWorkspace() {
-    if (layoutComplete) {
-        return;
-    }
-
     const chatgpt = findWindow(CHATGPT_DESKTOP_FILE);
     const konsole = findWindow(KONSOLE_DESKTOP_FILE);
+
+    if (chatgpt) {
+        chatgptLaunchRequested = false;
+    }
 
     if (!chatgpt || !konsole) {
         log(
             "waiting: ChatGPT=" + (chatgpt ? "found" : "missing") +
             ", Konsole=" + (konsole ? "found" : "missing")
         );
+
+        if (!chatgpt) {
+            requestChatGPTLaunch();
+        }
+
         return;
     }
 
@@ -87,13 +114,28 @@ function arrangeWorkspace() {
         log("Konsole already right-half.");
     }
 
-    layoutComplete = true;
     log("AI + Terminal workspace complete.");
+}
+
+function scheduleWorkspaceCheck() {
+    const timer = new QTimer();
+    timer.interval = 250;
+    timer.singleShot = true;
+
+    timer.timeout.connect(() => {
+        arrangeWorkspace();
+    });
+
+    timer.start();
 }
 
 function main() {
     workspace.windowAdded.connect(() => {
-        arrangeWorkspace();
+        scheduleWorkspaceCheck();
+    });
+
+    workspace.windowRemoved.connect(() => {
+        scheduleWorkspaceCheck();
     });
 
     arrangeWorkspace();

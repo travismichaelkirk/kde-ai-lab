@@ -1,0 +1,6 @@
+[Unit]
+Description=KDE AI Lab - Launch ChatGPT PWA
+
+[Service]
+Type=oneshot
+ExecStart=/opt/google/chrome/google-chrome --profile-directory=Default --app-id=cadlkienfkclaiaibeoongdcgmdikeeg
