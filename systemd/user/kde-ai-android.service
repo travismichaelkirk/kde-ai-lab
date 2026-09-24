@@ -1,0 +1,11 @@
+[Unit]
+Description=KDE AI Lab - Android Screen
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/kde-ai-lab/scripts/launcher/android-screen.sh
+Restart=no
+
+[Install]
+WantedBy=default.target
