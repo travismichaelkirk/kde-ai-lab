@@ -117,16 +117,16 @@ function arrangeWorkspace() {
     log("AI + Terminal workspace complete.");
 }
 
+const workspaceCheckTimer = new QTimer();
+workspaceCheckTimer.interval = 250;
+workspaceCheckTimer.singleShot = true;
+
+workspaceCheckTimer.timeout.connect(() => {
+    arrangeWorkspace();
+});
+
 function scheduleWorkspaceCheck() {
-    const timer = new QTimer();
-    timer.interval = 250;
-    timer.singleShot = true;
-
-    timer.timeout.connect(() => {
-        arrangeWorkspace();
-    });
-
-    timer.start();
+    workspaceCheckTimer.start();
 }
 
 function main() {
