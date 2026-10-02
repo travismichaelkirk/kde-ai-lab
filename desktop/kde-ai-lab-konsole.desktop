@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=KDE AI Lab Konsole
+Comment=KDE AI Lab terminal workspace
+Exec=/usr/bin/konsole --separate --desktopfile kde-ai-lab-konsole --profile KDE-AI-Lab --workdir %h/kde-ai-lab
+Icon=utilities-terminal
+Terminal=false
+Categories=Development;System;TerminalEmulator;

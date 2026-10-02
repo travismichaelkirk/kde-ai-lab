@@ -22,10 +22,15 @@ mkdir -p "$PROFILE_DIR"
 log "profile: $PROFILE_DIR"
 log "starting AUX browser"
 
-exec "$CHROME" \
+"$CHROME" \
     --user-data-dir="$PROFILE_DIR" \
     --class=kde-ai-lab-aux \
     --no-first-run \
     --no-default-browser-check \
     --new-window \
-    about:blank
+    about:blank \
+    >/tmp/kde-ai-lab-aux.log 2>&1 &
+
+disown
+
+log "AUX browser launch requested"

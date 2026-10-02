@@ -12,6 +12,14 @@ SYSTEMD_UNIT="kde-ai-chatgpt.service"
 SYSTEMD_SOURCE="$PROJECT_ROOT/systemd/user/$SYSTEMD_UNIT"
 SYSTEMD_TARGET="$HOME/.config/systemd/user/$SYSTEMD_UNIT"
 
+KONSOLE_PROFILE_SOURCE="$PROJECT_ROOT/konsole/KDE-AI-Lab.profile"
+KONSOLE_PROFILE_DIR="$HOME/.local/share/konsole"
+KONSOLE_PROFILE_TARGET="$KONSOLE_PROFILE_DIR/KDE-AI-Lab.profile"
+
+KONSOLE_DESKTOP_SOURCE="$PROJECT_ROOT/desktop/kde-ai-lab-konsole.desktop"
+KONSOLE_DESKTOP_DIR="$HOME/.local/share/applications"
+KONSOLE_DESKTOP_TARGET="$KONSOLE_DESKTOP_DIR/kde-ai-lab-konsole.desktop"
+
 log() {
     printf 'kde-ai-lab-install: %s\n' "$*"
 }
@@ -42,6 +50,12 @@ verify_requirements() {
 
     [[ -f "$SYSTEMD_SOURCE" ]] ||
         fail "systemd user unit not found"
+
+    [[ -f "$KONSOLE_PROFILE_SOURCE" ]] ||
+        fail "Konsole profile not found"
+
+    [[ -f "$KONSOLE_DESKTOP_SOURCE" ]] ||
+        fail "KDE AI Lab desktop entry not found"
 }
 
 install_kwin_package() {
@@ -76,6 +90,21 @@ install_systemd_unit() {
         "$SYSTEMD_TARGET"
 
     systemctl --user daemon-reload
+}
+
+install_konsole_assets() {
+    log "installing KDE AI Lab Konsole assets"
+
+    mkdir -p "$KONSOLE_PROFILE_DIR"
+    mkdir -p "$KONSOLE_DESKTOP_DIR"
+
+    install -m 0644 \
+        "$KONSOLE_PROFILE_SOURCE" \
+        "$KONSOLE_PROFILE_TARGET"
+
+    install -m 0644 \
+        "$KONSOLE_DESKTOP_SOURCE" \
+        "$KONSOLE_DESKTOP_TARGET"
 }
 
 enable_kwin_plugin() {
@@ -126,6 +155,7 @@ main() {
     verify_requirements
     install_kwin_package
     install_systemd_unit
+    install_konsole_assets
     enable_kwin_plugin
     reconfigure_kwin
     verify_installation

@@ -20,31 +20,59 @@ fail() {
 command -v adb >/dev/null 2>&1 ||
     fail "adb is not installed"
 
-wireless_device="$(
-    adb mdns services 2>/dev/null |
-    awk '$2 == "_adb-tls-connect._tcp" { print $3; exit }'
-)"
-
 device=""
 
-if [[ -n "$wireless_device" ]]; then
-    log "Wireless Debugging discovered: $wireless_device"
+# Prefer an already-connected Wireless Debugging device.
+connected_wireless="$(
+    adb devices |
+    awk '
+        NR > 1 &&
+        $2 == "device" &&
+        $1 ~ /_adb-tls-connect\._tcp$/ {
+            print $1
+            exit
+        }
+    '
+)"
 
-    adb connect "$wireless_device" >/dev/null 2>&1 || true
+if [[ -n "$connected_wireless" ]]; then
+    device="$connected_wireless"
+    log "using connected Wireless Debugging device"
+fi
 
-    if adb devices |
-        awk -v device="$wireless_device" '
-            $1 == device && $2 == "device" { found = 1 }
-            END { exit !found }
-        '
-    then
-        device="$wireless_device"
-        log "using Wireless Debugging"
-    else
-        log "Wireless Debugging endpoint is not authorized; checking USB"
+# If no wireless device is already connected, discover one with mDNS.
+if [[ -z "$device" ]]; then
+    wireless_endpoint="$(
+        adb mdns services 2>/dev/null |
+        awk '$2 == "_adb-tls-connect._tcp" { print $3; exit }'
+    )"
+
+    if [[ -n "$wireless_endpoint" ]]; then
+        log "Wireless Debugging discovered: $wireless_endpoint"
+        adb connect "$wireless_endpoint" >/dev/null 2>&1 || true
+
+        connected_wireless="$(
+            adb devices |
+            awk '
+                NR > 1 &&
+                $2 == "device" &&
+                $1 ~ /_adb-tls-connect\._tcp$/ {
+                    print $1
+                    exit
+                }
+            '
+        )"
+
+        if [[ -n "$connected_wireless" ]]; then
+            device="$connected_wireless"
+            log "using Wireless Debugging"
+        else
+            log "Wireless Debugging connection unavailable; checking USB"
+        fi
     fi
 fi
 
+# Final fallback: a single USB ADB device.
 if [[ -z "$device" ]]; then
     usb_devices="$(
         adb devices -l |

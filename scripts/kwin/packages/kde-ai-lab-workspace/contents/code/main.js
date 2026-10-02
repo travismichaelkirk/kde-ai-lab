@@ -17,7 +17,7 @@ const CHATGPT_DESKTOP_FILE =
     "chrome-cadlkienfkclaiaibeoongdcgmdikeeg-Default";
 
 const KONSOLE_DESKTOP_FILE =
-    "org.kde.konsole";
+    "kde-ai-lab-konsole";
 
 const SCRCPY_DESKTOP_FILE =
     "scrcpy";
