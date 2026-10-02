@@ -50,10 +50,10 @@ kde_ai_lab_select_android_device() {
 
         connected_wireless="$(
             adb devices |
-            awk '
+            awk -v endpoint="$wireless_endpoint" '
                 NR > 1 &&
                 $2 == "device" &&
-                $1 ~ /_adb-tls-connect\._tcp$/ {
+                ($1 ~ /_adb-tls-connect\._tcp$/ || $1 == endpoint) {
                     print $1
                     exit
                 }
