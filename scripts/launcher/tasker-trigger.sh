@@ -22,6 +22,14 @@ source "$SCRIPT_DIR/../lib/android-device.sh"
 command -v curl >/dev/null 2>&1 ||
     fail "curl is not installed"
 
+[[ $# -eq 1 ]] ||
+    fail "usage: $(basename "$0") <command>"
+
+command_name="$1"
+
+[[ "$command_name" =~ ^[a-z0-9][a-z0-9-]*$ ]] ||
+    fail "command must contain only lowercase letters, numbers, and hyphens"
+
 kde_ai_lab_select_android_device || exit 1
 
 device="$ANDROID_DEVICE"
@@ -41,12 +49,13 @@ pixel_ip="$(
 
 log "ADB device: $device"
 log "Wi-Fi address: $pixel_ip"
+log "Tasker command: $command_name"
 log "triggering Tasker HTTP bridge"
 
 curl \
     --silent \
     --show-error \
     --connect-timeout 5 \
-    "http://${pixel_ip}:8765/"
+    "http://${pixel_ip}:8765/${command_name}"
 
 log "Tasker HTTP request completed"
