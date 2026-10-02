@@ -62,3 +62,28 @@ Each capability will follow a deliberate cycle:
 9. Tag meaningful known-good milestones
 
 The project will grow from real workflow requirements rather than from speculative features.
+
+## Validated Workspace Milestones
+
+### v0.2-orchestration
+
+The multi-window KDE AI Lab workspace orchestration was validated on the Fedora KDE reference workstation using a two-monitor configuration.
+
+A true cold-start test was performed with all managed Monitor 2 workspace components stopped before launch. The workspace was then reconstructed using the single command:
+
+```bash
+scripts/launcher/ai-terminal-workspace.sh
+
+```
+
+The validated result was:
+
+- Monitor 1: ChatGPT remained maximized.
+- Monitor 2 left: dedicated KDE AI Lab Konsole.
+- Monitor 2 middle: Android device display through scrcpy.
+- Monitor 2 right: dedicated AUX Chrome browser.
+- An unrelated ordinary Konsole session remained running and was not managed or repositioned by KDE AI Lab.
+
+The cold-start test confirmed that the launcher can independently start the managed workspace components and that the KWin workspace controller can reconstruct the intended two-monitor layout without manual window positioning.
+
+The implementation represented by tag `v0.2-orchestration` is therefore the known-good baseline for multi-window workspace orchestration.
