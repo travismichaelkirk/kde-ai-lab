@@ -17,92 +17,26 @@ fail() {
 [[ -x "$SCRCPY" ]] ||
     fail "scrcpy executable not found: $SCRCPY"
 
-command -v adb >/dev/null 2>&1 ||
-    fail "adb is not installed"
-
-device=""
-
-# Prefer an already-connected Wireless Debugging device.
-connected_wireless="$(
-    adb devices |
-    awk '
-        NR > 1 &&
-        $2 == "device" &&
-        $1 ~ /_adb-tls-connect\._tcp$/ {
-            print $1
-            exit
-        }
-    '
+SCRIPT_DIR="$(
+    cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
+    pwd
 )"
 
-if [[ -n "$connected_wireless" ]]; then
-    device="$connected_wireless"
-    log "using connected Wireless Debugging device"
-fi
+# shellcheck source=../lib/android-device.sh
+source "$SCRIPT_DIR/../lib/android-device.sh"
 
-# If no wireless device is already connected, discover one with mDNS.
-if [[ -z "$device" ]]; then
-    wireless_endpoint="$(
-        adb mdns services 2>/dev/null |
-        awk '$2 == "_adb-tls-connect._tcp" { print $3; exit }'
-    )"
+kde_ai_lab_select_android_device || exit 1
 
-    if [[ -n "$wireless_endpoint" ]]; then
-        log "Wireless Debugging discovered: $wireless_endpoint"
-        adb connect "$wireless_endpoint" >/dev/null 2>&1 || true
+device="$ANDROID_DEVICE"
 
-        connected_wireless="$(
-            adb devices |
-            awk '
-                NR > 1 &&
-                $2 == "device" &&
-                $1 ~ /_adb-tls-connect\._tcp$/ {
-                    print $1
-                    exit
-                }
-            '
-        )"
-
-        if [[ -n "$connected_wireless" ]]; then
-            device="$connected_wireless"
-            log "using Wireless Debugging"
-        else
-            log "Wireless Debugging connection unavailable; checking USB"
-        fi
-    fi
-fi
-
-# Final fallback: a single USB ADB device.
-if [[ -z "$device" ]]; then
-    usb_devices="$(
-        adb devices -l |
-        awk '
-            NR > 1 &&
-            $2 == "device" &&
-            $0 ~ / usb:/ {
-                print $1
-            }
-        '
-    )"
-
-    usb_count="$(
-        printf '%s\n' "$usb_devices" |
-        awk 'NF { count++ } END { print count + 0 }'
-    )"
-
-    case "$usb_count" in
-        0)
-            fail "no usable Wireless Debugging or USB ADB device found"
-            ;;
-        1)
-            device="$usb_devices"
-            log "using USB fallback"
-            ;;
-        *)
-            fail "multiple USB ADB devices found; automatic selection is unsafe"
-            ;;
-    esac
-fi
+case "$ANDROID_TRANSPORT" in
+    "Wireless Debugging")
+        log "using connected Wireless Debugging device"
+        ;;
+    "USB")
+        log "using USB fallback"
+        ;;
+esac
 
 model="$(
     adb -s "$device" shell getprop ro.product.model |
