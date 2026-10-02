@@ -14,28 +14,57 @@ fail() {
 command -v adb >/dev/null 2>&1 ||
     fail "adb is not installed"
 
-wireless_device="$(
-    adb mdns services 2>/dev/null |
-    awk '$2 == "_adb-tls-connect._tcp" { print $3; exit }'
-)"
-
 device=""
 transport=""
 
-if [[ -n "$wireless_device" ]]; then
-    adb connect "$wireless_device" >/dev/null 2>&1 || true
+# Prefer an already-connected Wireless Debugging device.
+connected_wireless="$(
+    adb devices |
+    awk '
+        NR > 1 &&
+        $2 == "device" &&
+        $1 ~ /_adb-tls-connect\._tcp$/ {
+            print $1
+            exit
+        }
+    '
+)"
 
-    if adb devices |
-        awk -v device="$wireless_device" '
-            $1 == device && $2 == "device" { found = 1 }
-            END { exit !found }
-        '
-    then
-        device="$wireless_device"
-        transport="Wireless Debugging"
+if [[ -n "$connected_wireless" ]]; then
+    device="$connected_wireless"
+    transport="Wireless Debugging"
+fi
+
+# If no wireless device is already connected, discover one with mDNS.
+if [[ -z "$device" ]]; then
+    wireless_endpoint="$(
+        adb mdns services 2>/dev/null |
+        awk '$2 == "_adb-tls-connect._tcp" { print $3; exit }'
+    )"
+
+    if [[ -n "$wireless_endpoint" ]]; then
+        adb connect "$wireless_endpoint" >/dev/null 2>&1 || true
+
+        connected_wireless="$(
+            adb devices |
+            awk '
+                NR > 1 &&
+                $2 == "device" &&
+                $1 ~ /_adb-tls-connect\._tcp$/ {
+                    print $1
+                    exit
+                }
+            '
+        )"
+
+        if [[ -n "$connected_wireless" ]]; then
+            device="$connected_wireless"
+            transport="Wireless Debugging"
+        fi
     fi
 fi
 
+# Final fallback: a single USB ADB device.
 if [[ -z "$device" ]]; then
     usb_devices="$(
         adb devices -l |
@@ -129,6 +158,17 @@ else
     tasker_accessibility="Disabled"
 fi
 
+tasker_services="$(
+    adb -s "$device" shell         dumpsys activity services net.dinglisch.android.taskerm 2>/dev/null
+)"
+
+if grep -q     'net\.dinglisch\.android\.taskerm/\.MonitorService'     <<<"$tasker_services"
+then
+    tasker_automation="Enabled"
+else
+    tasker_automation="Disabled"
+fi
+
 resumed_activity="$(
     adb -s "$device" shell dumpsys activity activities |
     grep -m1 'ResumedActivity:' || true
@@ -155,6 +195,7 @@ printf '  Android user:    %s\n' "$current_user"
 
 printf '\nTASKER\n'
 printf '  Installed:       %s\n' "$tasker_installed"
+printf '  Automation:      %s\n' "$tasker_automation"
 printf '  Process:         %s\n' "$tasker_process"
 printf '  Foreground:      %s\n' "$tasker_foreground"
 
