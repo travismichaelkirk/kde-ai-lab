@@ -1,0 +1,18 @@
+# KDE AI Lab - Local secrets and credentials
+.env
+.env.*
+!.env.example
+
+# Authentication token files
+token
+token.next
+kde-ai-lab-token.tmp
+
+# Private configuration
+secrets/
+.config/
+
+# Python and temporary development files
+__pycache__/
+*.pyc
+.venv/
