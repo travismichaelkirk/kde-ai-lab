@@ -1,0 +1,28 @@
+[22328edf-c8d3-491d-b528-01ba7408c503]
+types=66487
+
+[863d458a-4b79-4b3a-8fef-73fc4324f179]
+Description=ChatGPT PWA
+desktops=68ba923c-b650-4bf4-9e29-681faba383c8
+desktopsrule=2
+maximizehoriz=true
+maximizehorizrule=3
+maximizevert=true
+maximizevertrule=3
+wmclass=chrome-cadlkienfkclaiaibeoongdcgmdikeeg-Default
+wmclassmatch=1
+
+[9a36d9ff-d2ce-4ddf-aa2a-470c805d09f1]
+Description=KDE AI Lab - Pixel 11 Pro (scrcpy)
+desktops=68ba923c-b650-4bf4-9e29-681faba383c8
+desktopsrule=2
+position=2659,18
+positionrule=2
+screen=1
+screenrule=2
+wmclass=scrcpy
+wmclassmatch=1
+
+[General]
+count=2
+rules=863d458a-4b79-4b3a-8fef-73fc4324f179,9a36d9ff-d2ce-4ddf-aa2a-470c805d09f1
