@@ -1,9 +1,10 @@
 <TaskerData sr="" dvi="1" tv="6.6.20">
 	<Profile sr="prof24" ve="2">
 		<cdate>1790978204092</cdate>
-		<edate>1791506945439</edate>
+		<edate>1791641485368</edate>
 		<flags>8</flags>
 		<id>24</id>
+		<limit>true</limit>
 		<mid0>16</mid0>
 		<nme>KDE AI Lab HTTP Bridge</nme>
 		<Event sr="con0" ve="2">
@@ -45,16 +46,40 @@ Request ID
 			<Int sr="arg6" val="1"/>
 			<Str sr="arg7" ve="3"/>
 		</Event>
+		<State sr="con1" ve="2">
+			<code>160</code>
+			<Str sr="arg0" ve="3">home</Str>
+			<Str sr="arg1" ve="3"/>
+			<Str sr="arg2" ve="3"/>
+			<Int sr="arg3" val="2"/>
+		</State>
+	</Profile>
+	<Profile sr="prof30" ve="2">
+		<cdate>1791639907354</cdate>
+		<clp>true</clp>
+		<edate>1791640323964</edate>
+		<flags>8</flags>
+		<id>30</id>
+		<mid0>31</mid0>
+		<nme>KDE AI Lab - WiFi Security Guard</nme>
+		<State sr="con0" ve="2">
+			<code>160</code>
+			<pin>true</pin>
+			<Str sr="arg0" ve="3">home</Str>
+			<Str sr="arg1" ve="3"/>
+			<Str sr="arg2" ve="3"/>
+			<Int sr="arg3" val="2"/>
+		</State>
 	</Profile>
 	<Project sr="proj0" ve="2">
 		<cdate>1790979745040</cdate>
 		<name>KDE AI Lab</name>
-		<pids>24</pids>
-		<tids>16,28,29</tids>
+		<pids>24,30</pids>
+		<tids>31,28,16,29</tids>
 	</Project>
 	<Task sr="task16">
 		<cdate>1790975680705</cdate>
-		<edate>1791517352692</edate>
+		<edate>1791638525538</edate>
 		<id>16</id>
 		<nme>KDE AI Lab Test</nme>
 		<pri>6</pri>
@@ -188,6 +213,17 @@ Request ID
 		</Action>
 		<Action sr="act2" ve="7">
 			<code>38</code>
+		</Action>
+	</Task>
+	<Task sr="task31">
+		<cdate>1791639990147</cdate>
+		<edate>1791640243362</edate>
+		<id>31</id>
+		<nme>KDE AI Lab - Disable Bridge</nme>
+		<Action sr="act0" ve="7">
+			<code>159</code>
+			<Str sr="arg0" ve="3">KDE AI Lab HTTP Bridge</Str>
+			<Int sr="arg1" val="0"/>
 		</Action>
 	</Task>
 </TaskerData>
