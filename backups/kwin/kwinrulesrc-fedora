@@ -1,6 +1,18 @@
 [22328edf-c8d3-491d-b528-01ba7408c503]
 types=66487
 
+[2808e85e-90b6-4e2e-9168-6599e26a94ee]
+Description=KDE AI Lab - AUX
+desktops=68ba923c-b650-4bf4-9e29-681faba383c8
+desktopsrule=2
+position=3323,0
+positionrule=2
+size=517,1048
+sizerule=2
+wmclass=chrome chrome-okkolgldfknecfjnhhglfopimelbaceh-Default
+wmclasscomplete=true
+wmclassmatch=1
+
 [863d458a-4b79-4b3a-8fef-73fc4324f179]
 Description=ChatGPT PWA
 desktops=68ba923c-b650-4bf4-9e29-681faba383c8
@@ -16,13 +28,25 @@ wmclassmatch=1
 Description=KDE AI Lab - Pixel 11 Pro (scrcpy)
 desktops=68ba923c-b650-4bf4-9e29-681faba383c8
 desktopsrule=2
-position=2659,18
+position=2620,18
 positionrule=2
-screen=1
-screenrule=2
 wmclass=scrcpy
 wmclassmatch=1
 
 [General]
-count=2
-rules=863d458a-4b79-4b3a-8fef-73fc4324f179,9a36d9ff-d2ce-4ddf-aa2a-470c805d09f1
+count=4
+rules=d25ab55f-ca9e-4dc9-97f0-ba9098087324,863d458a-4b79-4b3a-8fef-73fc4324f179,9a36d9ff-d2ce-4ddf-aa2a-470c805d09f1,2808e85e-90b6-4e2e-9168-6599e26a94ee
+
+[d25ab55f-ca9e-4dc9-97f0-ba9098087324]
+Description=KDE AI Lab - Konsole
+desktops=68ba923c-b650-4bf4-9e29-681faba383c8
+desktopsrule=2
+position=1920,18
+positionrule=2
+screen=1
+screenrule=2
+size=700,1048
+sizerule=2
+types=1
+wmclass=kde-ai-lab-konsole
+wmclassmatch=1
