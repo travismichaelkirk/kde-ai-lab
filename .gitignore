@@ -16,3 +16,6 @@ secrets/
 __pycache__/
 *.pyc
 .venv/
+
+# Local diagnostic captures (may contain sensitive information)
+captures/
