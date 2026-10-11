@@ -111,3 +111,20 @@ Full implementation details and verification results are documented in
 `docs/tasker-http-bridge.md`.
 
 The `v0.3-http-bridge` tag will identify the verified baseline.
+
+### v0.7-diagnostic-workbench
+
+The Tasker Diagnostic Workbench provides three Fedora-based utilities
+for investigating Android and Tasker behavior through ADB:
+
+- Android device status inspection.
+- Tasker live log monitoring, including warnings-only mode.
+- Timestamped Android screenshot capture.
+
+All three utilities were independently tested, committed, and pushed.
+Screenshot captures are stored locally and excluded from Git.
+
+Implementation details, security considerations, and known limitations
+are documented in docs/v0.7-diagnostic-workbench.md.
+
+The v0.7 tag will identify the verified diagnostic workbench baseline.
