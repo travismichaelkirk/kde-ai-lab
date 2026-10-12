@@ -104,3 +104,51 @@ kde_ai_lab_select_android_device() {
             ;;
     esac
 }
+
+# Select an already-connected, verified Pixel Wireless ADB transport.
+# This function does not initiate discovery or change ADB connections.
+# shellcheck disable=SC2034
+kde_ai_lab_select_verified_wireless_device() {
+    local expected_serial="67140DLKX00137"
+    local transport=""
+    local state=""
+    local actual_serial=""
+    local adb_list=""
+
+    command -v adb >/dev/null 2>&1 || {
+        printf 'ERROR: adb is not installed\n' >&2
+        return 1
+    }
+
+    ANDROID_DEVICE=""
+    ANDROID_TRANSPORT=""
+
+    adb_list="$(timeout 10 adb devices)" || {
+        printf 'ERROR: unable to enumerate ADB devices\n' >&2
+        return 1
+    }
+
+    while read -r transport state _; do
+        [[ "$state" == "device" ]] || continue
+
+        # Consider TLS mDNS names and IPv4:port transports.
+        if [[ "$transport" != *._adb-tls-connect._tcp &&
+              ! "$transport" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$ ]]; then
+            continue
+        fi
+
+        actual_serial="$(
+            timeout 5 adb -s "$transport" shell getprop ro.serialno 2>/dev/null
+        )" || continue
+
+        actual_serial="${actual_serial//$'\r'/}"
+
+        if [[ "$actual_serial" == "$expected_serial" ]]; then
+            ANDROID_DEVICE="$transport"
+            ANDROID_TRANSPORT="Wireless Debugging"
+            return 0
+        fi
+    done <<< "$adb_list"
+
+    return 1
+}
