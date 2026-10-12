@@ -15,67 +15,67 @@ kde_ai_lab_select_android_device() {
     ANDROID_DEVICE=""
     ANDROID_TRANSPORT=""
 
-    local connected_wireless=""
-    local wireless_endpoint=""
     local usb_devices=""
     local usb_count=""
 
     # Prefer the designated Pixel when its Wireless ADB connection
     # is already active and its serial number has been verified.
-    if kde_ai_lab_select_verified_wireless_device; then
-        return 0
-    fi
+    local selection_status=0
 
-    # Prefer an already-connected Wireless Debugging device.
-    connected_wireless="$(
-        adb devices |
-        awk '
-            NR > 1 &&
-            $2 == "device" &&
-            $1 ~ /_adb-tls-connect\._tcp$/ {
-                print $1
-                exit
-            }
-        '
-    )"
+    kde_ai_lab_select_verified_wireless_device || selection_status=$?
 
-    if [[ -n "$connected_wireless" ]]; then
-        ANDROID_DEVICE="$connected_wireless"
-        ANDROID_TRANSPORT="Wireless Debugging"
-        return 0
-    fi
-
-    # If no wireless device is already connected, discover one with mDNS.
-    wireless_endpoint="$(
-        adb mdns services 2>/dev/null |
-        awk '$2 == "_adb-tls-connect._tcp" { print $3; exit }'
-    )"
-
-    if [[ -n "$wireless_endpoint" ]]; then
-        adb connect "$wireless_endpoint" >/dev/null 2>&1 || true
-
-        connected_wireless="$(
-            adb devices |
-            awk -v endpoint="$wireless_endpoint" '
-                NR > 1 &&
-                $2 == "device" &&
-                ($1 ~ /_adb-tls-connect\._tcp$/ || $1 == endpoint) {
-                    print $1
-                    exit
-                }
-            '
-        )"
-
-        if [[ -n "$connected_wireless" ]]; then
-            ANDROID_DEVICE="$connected_wireless"
-            ANDROID_TRANSPORT="Wireless Debugging"
+    case "$selection_status" in
+        0)
             return 0
+            ;;
+        1)
+            # No verified wireless connection; recovery may be attempted.
+            ;;
+        *)
+            # ADB failure: do not attempt recovery or USB fallback.
+            return "$selection_status"
+            ;;
+    esac
+
+    # Recover Wireless Debugging using the existing v0.8 manager.
+    # Resolve the script relative to this library, not the working directory.
+    local recovery_script=""
+    recovery_script="$(
+        cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../diagnostics" &&
+        pwd
+    )/adb-connect.sh"
+
+    if [[ -x "$recovery_script" ]]; then
+        if bash "$recovery_script" >/dev/null 2>&1; then
+            selection_status=0
+            kde_ai_lab_select_verified_wireless_device || selection_status=$?
+
+            case "$selection_status" in
+                0)
+                    return 0
+                    ;;
+                1)
+                    # Recovery did not produce a verified wireless device.
+                    ;;
+                *)
+                    # ADB failure: do not attempt USB fallback.
+                    return "$selection_status"
+                    ;;
+            esac
         fi
     fi
 
     # Final fallback: a single USB ADB device.
+    # Do not mistake an ADB enumeration failure for an empty device list.
+    local usb_adb_list=""
+
+    usb_adb_list="$(timeout 10 adb devices -l)" || {
+        printf 'ERROR: unable to enumerate USB ADB devices\n' >&2
+        return 2
+    }
+
     usb_devices="$(
-        adb devices -l |
+        printf '%s\n' "$usb_adb_list" |
         awk '
             NR > 1 &&
             $2 == "device" &&
@@ -98,6 +98,22 @@ kde_ai_lab_select_android_device() {
             return 1
             ;;
         1)
+            local actual_serial=""
+
+            actual_serial="$(
+                timeout 5 adb -s "$usb_devices" shell getprop ro.serialno 2>/dev/null
+            )" || {
+                printf 'ERROR: unable to verify USB device identity\n' >&2
+                return 1
+            }
+
+            actual_serial="${actual_serial//$'\r'/}"
+
+            if [[ "$actual_serial" != "67140DLKX00137" ]]; then
+                printf 'ERROR: USB device serial does not match designated Pixel\n' >&2
+                return 1
+            fi
+
             ANDROID_DEVICE="$usb_devices"
             ANDROID_TRANSPORT="USB"
             return 0
@@ -123,7 +139,7 @@ kde_ai_lab_select_verified_wireless_device() {
 
     command -v adb >/dev/null 2>&1 || {
         printf 'ERROR: adb is not installed\n' >&2
-        return 1
+        return 2
     }
 
     ANDROID_DEVICE=""
@@ -131,7 +147,7 @@ kde_ai_lab_select_verified_wireless_device() {
 
     adb_list="$(timeout 10 adb devices)" || {
         printf 'ERROR: unable to enumerate ADB devices\n' >&2
-        return 1
+        return 2
     }
 
     while read -r transport state _; do
