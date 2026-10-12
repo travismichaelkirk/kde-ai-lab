@@ -20,6 +20,12 @@ kde_ai_lab_select_android_device() {
     local usb_devices=""
     local usb_count=""
 
+    # Prefer the designated Pixel when its Wireless ADB connection
+    # is already active and its serial number has been verified.
+    if kde_ai_lab_select_verified_wireless_device; then
+        return 0
+    fi
+
     # Prefer an already-connected Wireless Debugging device.
     connected_wireless="$(
         adb devices |
