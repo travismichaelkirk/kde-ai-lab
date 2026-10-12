@@ -128,3 +128,30 @@ Implementation details, security considerations, and known limitations
 are documented in docs/v0.7-diagnostic-workbench.md.
 
 The v0.7 tag will identify the verified diagnostic workbench baseline.
+
+### v0.8-wireless-adb-connection-manager
+
+The Wireless ADB Connection Manager extends the v0.7 diagnostic
+workbench with on-demand connectivity recovery for the Pixel 11 Pro.
+
+The utility provides:
+
+- Automatic discovery of the Pixel's TLS Wireless debugging endpoint.
+- Verification of existing ADB connections using the device serial.
+- Avoidance of unnecessary reconnections.
+- Recovery when no verified ADB connection is available.
+- Device identity verification following recovery.
+
+Existing-connection verification and full disconnection recovery
+were successfully tested. Bash syntax validation and ShellCheck
+static analysis also passed.
+
+The utility runs manually and preserves the existing Tasker,
+LADB, and ADB port 5555 configuration.
+
+Implementation details, dependencies, security considerations,
+and known limitations are documented in
+docs/v0.8-wireless-adb-connection-manager.md.
+
+The v0.8 milestone will establish the verified Wireless ADB
+Connection Manager baseline.
