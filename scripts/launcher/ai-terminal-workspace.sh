@@ -68,7 +68,7 @@ ensure_konsole() {
 }
 
 ensure_android_screen() {
-    if pgrep -f '/scrcpy .*adb-' >/dev/null; then
+    if pgrep -x scrcpy >/dev/null; then
         log "Android screen already running"
         return
     fi
@@ -93,8 +93,8 @@ ensure_aux_browser() {
 
 main() {
     log "launcher started"
-    verify_konsole_assets
-    verify_kwin_controller
+    verify_konsole_assets || return 1
+    verify_kwin_controller || return 1
     ensure_konsole
     ensure_android_screen
     ensure_aux_browser

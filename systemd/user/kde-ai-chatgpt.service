@@ -3,4 +3,4 @@ Description=KDE AI Lab - Launch ChatGPT PWA
 
 [Service]
 Type=oneshot
-ExecStart=/opt/google/chrome/google-chrome --profile-directory=Default --app-id=cadlkienfkclaiaibeoongdcgmdikeeg
+ExecStart=/usr/bin/systemd-run --user --no-block --collect -- /opt/google/chrome/google-chrome --profile-directory=Default --app-id=cadlkienfkclaiaibeoongdcgmdikeeg

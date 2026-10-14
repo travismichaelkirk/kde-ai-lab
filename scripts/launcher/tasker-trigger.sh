@@ -50,12 +50,29 @@ pixel_ip="$(
 log "ADB device: $device"
 log "Wi-Fi address: $pixel_ip"
 log "Tasker command: $command_name"
-log "triggering Tasker HTTP bridge"
+token_file="$HOME/.config/kde-ai-lab/token"
 
-curl \
-    --silent \
-    --show-error \
-    --connect-timeout 5 \
-    "http://${pixel_ip}:8765/${command_name}"
+[[ -f "$token_file" && -r "$token_file" ]] ||
+    fail "Tasker authentication token file is missing or unreadable"
 
-log "Tasker HTTP request completed"
+token="$(< "$token_file")"
+
+[[ "$token" =~ ^[[:xdigit:]]{64}$ ]] ||
+    fail "Tasker authentication token has an invalid format"
+
+log "triggering authenticated Tasker HTTP bridge"
+
+# Supply the authentication header through curl configuration on stdin,
+# rather than exposing the token in process command-line arguments.
+printf 'header = "X-KDE-AI-Lab-Token: %s"\n' "$token" |
+    curl \
+        --config - \
+        --silent \
+        --show-error \
+        --fail \
+        --connect-timeout 5 \
+        --max-time 15 \
+        "http://${pixel_ip}:8765/${command_name}" ||
+    fail "Tasker HTTP request failed or bridge is unavailable"
+
+log "Tasker HTTP request completed successfully"
