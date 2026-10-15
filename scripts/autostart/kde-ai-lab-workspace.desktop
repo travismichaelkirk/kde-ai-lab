@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=KDE AI Lab Workspace
+Comment=Launch KDE AI Lab workspace at Plasma login
+Exec=/usr/bin/bash /home/tkirk/kde-ai-lab/scripts/launcher/workspace-autostart.sh
+Terminal=false
+X-KDE-autostart-phase=2
