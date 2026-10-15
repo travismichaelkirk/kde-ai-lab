@@ -26,6 +26,7 @@ const AUX_DESKTOP_FILE =
     "kde-ai-lab-aux";
 
 let chatgptLaunchRequested = false;
+let chatgptSeen = false;
 let pixelCenterTimer;
 let auxSettleTimer;
 
@@ -234,7 +235,7 @@ function arrangeWorkspace() {
     const konsole = findWindow(KONSOLE_DESKTOP_FILE);
 
     if (chatgpt) {
-        chatgptLaunchRequested = false;
+        chatgptSeen = true;
     }
 
     if (!chatgpt || !konsole) {
@@ -243,7 +244,7 @@ function arrangeWorkspace() {
             ", Konsole=" + (konsole ? "found" : "missing")
         );
 
-        if (!chatgpt) {
+        if (!chatgpt && !chatgptSeen) {
             requestChatGPTLaunch();
         }
 
