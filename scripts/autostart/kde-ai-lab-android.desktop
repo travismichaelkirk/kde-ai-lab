@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=KDE AI Lab - Android Mirror
+Comment=Mirror Pixel 11 Pro without forwarding audio
+Exec=/usr/bin/bash /home/tkirk/kde-ai-lab/scripts/launcher/android-screen.sh
+Icon=phone
+Terminal=false
+Categories=Utility;
+StartupNotify=false

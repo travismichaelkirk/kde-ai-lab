@@ -46,4 +46,4 @@ model="$(
 log "ADB device: $device${model:+ ($model)}"
 log "starting scrcpy"
 
-exec "$SCRCPY" -s "$device"
+exec "$SCRCPY" -s "$device" --no-audio
